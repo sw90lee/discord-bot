@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "discord-bot.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "discord-bot.labels" . | nindent 4 }}
+data:
+  config.json: |
+    {
+      "welcome": {
+        "enabled": {{ .Values.config.welcome.enabled }},
+        "title": {{ .Values.config.welcome.title | quote }},
+        "description": {{ .Values.config.welcome.description | quote }},
+        "color": {{ .Values.config.welcome.color }},
+        "footer": {{ .Values.config.welcome.footer | quote }},
+        "show_member_count": {{ .Values.config.welcome.show_member_count }},
+        "show_avatar": {{ .Values.config.welcome.show_avatar }}
+      },
+      "leveling": {
+        "enabled": {{ .Values.config.leveling.enabled }},
+        "xp_per_message": {{ .Values.config.leveling.xp_per_message }},
+        "xp_cooldown": {{ .Values.config.leveling.xp_cooldown }},
+        "level_up_message": {{ .Values.config.leveling.level_up_message | quote }},
+        "announce_level_up": {{ .Values.config.leveling.announce_level_up }}
+      },
+      "moderation": {
+        "log_channel_id": {{ .Values.config.moderation.log_channel_id }},
+        "max_warnings": {{ .Values.config.moderation.max_warnings }}
+      }
+    }

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "discord-bot.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "discord-bot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "discord-bot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "discord-bot.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: bot
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "discord-bot.fullname" . }}-secret
+              key: DISCORD_TOKEN
+        {{- if .Values.bot.welcomeChannelId }}
+        - name: WELCOME_CHANNEL_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "discord-bot.fullname" . }}-secret
+              key: WELCOME_CHANNEL_ID
+              optional: true
+        {{- end }}
+        volumeMounts:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          mountPath: /app/data
+        {{- end }}
+        - name: config
+          mountPath: /app/data/config.json
+          subPath: config.json
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        {{- if .Values.livenessProbe.enabled }}
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.readinessProbe.enabled }}
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+        {{- end }}
+      volumes:
+      {{- if .Values.persistence.enabled }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "discord-bot.fullname" . }}-data
+      {{- end }}
+      - name: config
+        configMap:
+          name: {{ include "discord-bot.fullname" . }}-config
+          items:
+          - key: config.json
+            path: config.json
+      restartPolicy: Always
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,88 @@
+# Default values for discord-bot
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# 네임스페이스
+namespace: discord-bot
+
+# 이미지 설정
+image:
+  repository: discord-bot
+  pullPolicy: Always
+  tag: "latest"
+
+# ImagePullSecrets (프라이빗 레지스트리 사용 시)
+imagePullSecrets: []
+# - name: regcred
+
+# 레플리카 수 (Discord 봇은 1개만 실행)
+replicaCount: 1
+
+# 봇 설정
+bot:
+  # Discord 봇 토큰 (필수)
+  discordToken: ""
+
+  # 환영 채널 ID (선택사항)
+  welcomeChannelId: ""
+
+# 기본 설정 (ConfigMap)
+config:
+  welcome:
+    enabled: true
+    title: "🎉 새로운 멤버가 도착했습니다!"
+    description: "{mention}님, 환영합니다!"
+    color: 65280  # 녹색 (0x00ff00)
+    footer: "즐거운 시간 되세요!"
+    show_member_count: true
+    show_avatar: true
+
+  leveling:
+    enabled: true
+    xp_per_message: 10
+    xp_cooldown: 60
+    level_up_message: "🎊 {mention}님이 레벨 {level}에 도달했습니다!"
+    announce_level_up: true
+
+  moderation:
+    log_channel_id: null
+    max_warnings: 3
+
+# 리소스 제한
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "512Mi"
+    cpu: "400m"
+
+# Persistent Volume 설정
+persistence:
+  enabled: true
+  # storageClassName: "standard"  # 사용하는 StorageClass 이름
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+# 프로브 설정
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 60
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+
+# 노드 셀렉터
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}

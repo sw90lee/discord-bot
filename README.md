@@ -91,12 +91,20 @@ docker run -e DISCORD_TOKEN="your_token" discord-bot
 
 ### Kubernetes에 배포
 
+**방법 A: Helm Chart 사용 (권장)**
 ```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/pvc.yaml
-kubectl apply -f k8s/deployment.yaml
+cd k8s/helm-chart
+helm install discord-bot . -n discord-bot --create-namespace \
+  --set bot.discordToken="YOUR_TOKEN"
+```
+
+**방법 B: YAML 매니페스트 사용**
+```bash
+kubectl apply -f k8s/manifests/namespace.yaml
+kubectl apply -f k8s/manifests/configmap.yaml
+kubectl apply -f k8s/manifests/secret.yaml
+kubectl apply -f k8s/manifests/pvc.yaml
+kubectl apply -f k8s/manifests/deployment.yaml
 ```
 
 ## 프로젝트 구조
@@ -124,12 +132,23 @@ discord-welcome-bot/
 ├── .gitignore                 # Git 제외
 ├── README.md                  # 프로젝트 소개
 ├── SETUP.md                   # 상세 설정 가이드
-└── k8s/                       # Kubernetes 매니페스트
-    ├── namespace.yaml         # 네임스페이스
-    ├── secret.yaml.template   # Secret 템플릿
-    ├── configmap.yaml         # 기본 설정
-    ├── pvc.yaml               # 영구 볼륨
-    └── deployment.yaml        # Deployment
+└── k8s/                       # Kubernetes 배포
+    ├── manifests/             # YAML 매니페스트
+    │   ├── namespace.yaml
+    │   ├── secret.yaml.template
+    │   ├── configmap.yaml
+    │   ├── pvc.yaml
+    │   └── deployment.yaml
+    └── helm-chart/            # Helm Chart
+        ├── Chart.yaml
+        ├── values.yaml
+        ├── README.md
+        └── templates/
+            ├── deployment.yaml
+            ├── secret.yaml
+            ├── configmap.yaml
+            ├── pvc.yaml
+            └── namespace.yaml
 ```
 
 ## 환영 메시지 설정

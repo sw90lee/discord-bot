@@ -1,0 +1,15 @@
+apiVersion: v2
+name: discord-bot
+description: A Helm chart for Discord Multi-Purpose Bot
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - discord
+  - bot
+  - chatbot
+maintainers:
+  - name: Discord Bot Team
+home: https://github.com/your-repo/discord-bot
+sources:
+  - https://github.com/your-repo/discord-bot

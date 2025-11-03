@@ -163,7 +163,111 @@ docker push your-registry.com/discord-welcome-bot:latest
 
 ## 4. Kubernetes에 배포
 
-### 4.1 사전 준비
+### 배포 방법 선택
+
+Discord 봇을 Kubernetes에 배포하는 두 가지 방법이 있습니다:
+
+- **방법 A**: Helm Chart 사용 (권장) - 간편하고 관리하기 쉬움
+- **방법 B**: 직접 YAML 매니페스트 사용 - 더 세밀한 제어 가능
+
+---
+
+## 4-A. Helm Chart로 배포 (권장)
+
+### 4-A.1 사전 준비
+
+다음 도구가 설치되어 있어야 합니다:
+- Kubernetes 1.19+
+- Helm 3.0+
+- `kubectl` CLI
+
+```bash
+# Helm 설치 확인
+helm version
+
+# kubectl 설치 확인
+kubectl version --client
+
+# 클러스터 연결 확인
+kubectl cluster-info
+```
+
+### 4-A.2 values.yaml 설정
+
+`k8s/helm-chart/values.yaml` 파일을 수정합니다:
+
+```yaml
+# 이미지 설정
+image:
+  repository: your-registry.com/discord-bot
+  tag: "latest"
+
+# 봇 설정 (필수)
+bot:
+  discordToken: "YOUR_DISCORD_BOT_TOKEN"
+  welcomeChannelId: "YOUR_CHANNEL_ID"  # 선택사항
+```
+
+### 4-A.3 Helm으로 설치
+
+```bash
+# Helm Chart 디렉토리로 이동
+cd k8s/helm-chart
+
+# 설치
+helm install discord-bot . -n discord-bot --create-namespace
+
+# 또는 커맨드라인에서 값 지정
+helm install discord-bot . \
+  --set bot.discordToken="YOUR_TOKEN" \
+  --set image.repository="your-registry.com/discord-bot" \
+  -n discord-bot --create-namespace
+```
+
+### 4-A.4 배포 상태 확인
+
+```bash
+# 릴리스 확인
+helm list -n discord-bot
+
+# Pod 상태 확인
+kubectl get pods -n discord-bot
+
+# 로그 확인
+kubectl logs -f deployment/discord-bot -n discord-bot
+```
+
+### 4-A.5 업그레이드
+
+설정을 변경하고 업그레이드:
+
+```bash
+# values.yaml 수정 후
+helm upgrade discord-bot . -f values.yaml -n discord-bot
+
+# 또는 특정 값만 변경
+helm upgrade discord-bot . \
+  --set bot.discordToken="NEW_TOKEN" \
+  -n discord-bot
+```
+
+### 4-A.6 삭제
+
+```bash
+# Helm 릴리스 삭제
+helm uninstall discord-bot -n discord-bot
+
+# 네임스페이스도 삭제
+kubectl delete namespace discord-bot
+```
+
+자세한 내용은 `k8s/helm-chart/README.md`를 참고하세요.
+
+---
+
+## 4-B. YAML 매니페스트로 직접 배포
+
+### 4-B.1 사전 준비
 
 Kubernetes 클러스터가 준비되어 있어야 합니다. 다음 도구가 설치되어 있는지 확인합니다:
 - `kubectl` (Kubernetes CLI)
@@ -177,21 +281,21 @@ kubectl version --client
 kubectl cluster-info
 ```
 
-### 4.2 네임스페이스 생성
+### 4-B.2 네임스페이스 생성
 
 ```bash
-kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/manifests/namespace.yaml
 ```
 
-### 4.3 Secret 생성
+### 4-B.3 Secret 생성
 
-1. `k8s/secret.yaml.template` 파일을 복사하여 `k8s/secret.yaml`을 생성합니다:
+1. `k8s/manifests/secret.yaml.template` 파일을 복사하여 `secret.yaml`을 생성합니다:
 
 ```bash
-cp k8s/secret.yaml.template k8s/secret.yaml
+cp k8s/manifests/secret.yaml.template k8s/manifests/secret.yaml
 ```
 
-2. `k8s/secret.yaml` 파일을 편집하여 실제 값을 입력합니다:
+2. `k8s/manifests/secret.yaml` 파일을 편집하여 실제 값을 입력합니다:
 
 ```yaml
 apiVersion: v1
@@ -208,14 +312,14 @@ stringData:
 3. Secret을 Kubernetes에 생성합니다:
 
 ```bash
-kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/manifests/secret.yaml
 ```
 
 **보안 주의사항**: `secret.yaml` 파일은 Git에 커밋하지 마세요! (`.gitignore`에 이미 포함되어 있습니다)
 
-### 4.4 Deployment 수정
+### 4-B.4 Deployment 수정
 
-`k8s/deployment.yaml` 파일에서 이미지 경로를 수정합니다:
+`k8s/manifests/deployment.yaml` 파일에서 이미지 경로를 수정합니다:
 
 ```yaml
 spec:
@@ -224,13 +328,20 @@ spec:
     image: your-registry.com/discord-welcome-bot:latest  # 실제 이미지 경로로 변경
 ```
 
-### 4.5 Deployment 생성
+### 4-B.5 ConfigMap과 PVC 생성
 
 ```bash
-kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/manifests/configmap.yaml
+kubectl apply -f k8s/manifests/pvc.yaml
 ```
 
-### 4.6 배포 상태 확인
+### 4-B.6 Deployment 생성
+
+```bash
+kubectl apply -f k8s/manifests/deployment.yaml
+```
+
+### 4-B.7 배포 상태 확인
 
 ```bash
 # Pod 상태 확인

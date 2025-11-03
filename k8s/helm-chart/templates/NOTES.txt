@@ -1,0 +1,31 @@
+Discord Bot이 성공적으로 배포되었습니다!
+
+1. 배포 상태 확인:
+
+  kubectl get pods -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "discord-bot.name" . }},app.kubernetes.io/instance={{ .Release.Name }}"
+
+2. 로그 확인:
+
+  kubectl logs -f deployment/{{ include "discord-bot.fullname" . }} -n {{ .Values.namespace }}
+
+3. Pod 상세 정보:
+
+  kubectl describe pod -n {{ .Values.namespace }} -l "app.kubernetes.io/name={{ include "discord-bot.name" . }}"
+
+{{- if not .Values.bot.discordToken }}
+
+⚠️  경고: Discord 봇 토큰이 설정되지 않았습니다!
+   values.yaml 파일에서 bot.discordToken을 설정하거나
+   다음 명령어로 업그레이드하세요:
+
+   helm upgrade {{ .Release.Name }} ./helm-chart \
+     --set bot.discordToken="YOUR_DISCORD_BOT_TOKEN" \
+     -n {{ .Values.namespace }}
+
+{{- end }}
+
+봇 설정을 변경하려면:
+  1. values.yaml 파일을 수정
+  2. helm upgrade {{ .Release.Name }} ./helm-chart -n {{ .Values.namespace }}
+
+즐거운 Discord 봇 운영 되세요! 🎉
