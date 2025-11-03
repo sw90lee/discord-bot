@@ -44,7 +44,8 @@ class DiscordBot(commands.Bot):
             'cogs.roles',
             'cogs.utility',
             'cogs.leveling',
-            'cogs.news'
+            'cogs.news',
+            'cogs.stocks'
         ]
 
         for cog in cogs:

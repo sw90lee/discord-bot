@@ -57,6 +57,20 @@ class Database:
                 )
             ''')
 
+            # 주식 감시 목록 테이블
+            await db.execute('''
+                CREATE TABLE IF NOT EXISTS stock_watchlist (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    guild_id INTEGER,
+                    ticker TEXT,
+                    name TEXT,
+                    last_price REAL DEFAULT 0,
+                    last_change_percent REAL DEFAULT 0,
+                    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(guild_id, ticker)
+                )
+            ''')
+
             await db.commit()
             logger.info('데이터베이스 초기화 완료')
 
@@ -239,4 +253,58 @@ class Database:
                 'DELETE FROM reaction_roles WHERE message_id = ? AND emoji = ?',
                 (message_id, emoji)
             )
+            await db.commit()
+
+    # ===== 주식 감시 목록 =====
+    async def add_stock_to_watchlist(self, guild_id: int, ticker: str, name: str):
+        """주식 감시 목록에 추가"""
+        async with aiosqlite.connect(self.db_path) as db:
+            try:
+                await db.execute('''
+                    INSERT INTO stock_watchlist (guild_id, ticker, name)
+                    VALUES (?, ?, ?)
+                ''', (guild_id, ticker, name))
+                await db.commit()
+                return True
+            except:
+                return False
+
+    async def remove_stock_from_watchlist(self, guild_id: int, ticker: str):
+        """주식 감시 목록에서 제거"""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                'DELETE FROM stock_watchlist WHERE guild_id = ? AND ticker = ?',
+                (guild_id, ticker)
+            )
+            await db.commit()
+
+    async def get_watchlist(self, guild_id: int):
+        """서버의 주식 감시 목록 가져오기"""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute('''
+                SELECT ticker, name, last_price, last_change_percent
+                FROM stock_watchlist
+                WHERE guild_id = ?
+                ORDER BY added_at
+            ''', (guild_id,)) as cursor:
+                return await cursor.fetchall()
+
+    async def get_watchlist_count(self, guild_id: int):
+        """서버의 주식 감시 목록 개수"""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                'SELECT COUNT(*) FROM stock_watchlist WHERE guild_id = ?',
+                (guild_id,)
+            ) as cursor:
+                result = await cursor.fetchone()
+                return result[0] if result else 0
+
+    async def update_stock_price(self, guild_id: int, ticker: str, price: float, change_percent: float):
+        """주식 가격 업데이트"""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute('''
+                UPDATE stock_watchlist
+                SET last_price = ?, last_change_percent = ?
+                WHERE guild_id = ? AND ticker = ?
+            ''', (price, change_percent, guild_id, ticker))
             await db.commit()

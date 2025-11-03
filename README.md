@@ -47,6 +47,21 @@
 - `/newsstatus` - 뉴스 설정 상태 확인
 - 지원 뉴스: 구글 뉴스, 네이버 뉴스, IT 뉴스, 경제 뉴스
 
+### 📈 주식 시장 정보
+- `/stocks` - 주식 시장 현황 조회
+- `/schedulestocks` - 특정 시간에 자동으로 주식 정보 전송 설정
+- `/stopstocks` - 주식 자동 전송 중지
+- `/stocksstatus` - 주식 설정 상태 확인
+- 지원 지표: 코스피, 코스닥, 나스닥, S&P 500, 다우존스, 비트코인, 이더리움, 원/달러
+
+### 🔔 주식 감시 및 알림
+- `/addstock` - 특정 주식을 감시 목록에 추가 (최대 10개)
+- `/removestock` - 감시 목록에서 제거
+- `/watchlist` - 현재 감시 중인 주식 목록 확인
+- `/setalert` - 변동 알림 설정 (5% 이상 등락 시 자동 알림)
+- `/stopalert` - 알림 중지
+- 5분마다 자동 모니터링, 임계값 초과 시 실시간 알림
+
 ## 빠른 시작
 
 ### 로컬 환경에서 실행
@@ -95,7 +110,8 @@ discord-welcome-bot/
 │   ├── roles.py               # 역할 관리
 │   ├── leveling.py            # 레벨링 시스템
 │   ├── utility.py             # 유틸리티
-│   └── news.py                # 뉴스 자동 전송
+│   ├── news.py                # 뉴스 자동 전송
+│   └── stocks.py              # 주식 시장 정보
 ├── utils/                      # 유틸리티 모듈
 │   ├── database.py            # SQLite 데이터베이스
 │   └── config.py              # 설정 관리
@@ -152,6 +168,7 @@ kubectl rollout restart deployment/discord-welcome-bot -n discord-bot
 - aiosqlite 0.19.0+
 - feedparser 6.0.10+ (뉴스 기능)
 - aiohttp 3.9.1+ (HTTP 요청)
+- yfinance 0.2.33+ (주식 정보)
 - Docker (컨테이너 배포 시)
 - Kubernetes (K8s 배포 시)
 
