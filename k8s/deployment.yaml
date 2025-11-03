@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-welcome-bot
+  namespace: discord-bot
+  labels:
+    app: discord-welcome-bot
+spec:
+  replicas: 1  # Discord 봇은 하나의 인스턴스만 실행
+  selector:
+    matchLabels:
+      app: discord-welcome-bot
+  template:
+    metadata:
+      labels:
+        app: discord-welcome-bot
+    spec:
+      containers:
+      - name: bot
+        image: discord-welcome-bot:latest  # 실제 이미지 경로로 변경 필요
+        imagePullPolicy: Always
+        env:
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: discord-bot-secret
+              key: DISCORD_TOKEN
+        - name: WELCOME_CHANNEL_ID
+          valueFrom:
+            secretKeyRef:
+              name: discord-bot-secret
+              key: WELCOME_CHANNEL_ID
+              optional: true  # 선택사항으로 변경
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: config
+          mountPath: /app/data/config.json
+          subPath: config.json
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
+        # Liveness probe: 봇이 정상 작동하는지 확인
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Readiness probe: 봇이 준비되었는지 확인
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import sys; sys.exit(0)"
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: discord-bot-data
+      - name: config
+        configMap:
+          name: discord-bot-config
+          items:
+          - key: config.json
+            path: config.json
+      restartPolicy: Always

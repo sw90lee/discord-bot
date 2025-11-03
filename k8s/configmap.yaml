@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: discord-bot-config
+  namespace: discord-bot
+data:
+  # 기본 환영 메시지 설정 (봇 내에서 /setwelcome 명령어로 변경 가능)
+  config.json: |
+    {
+      "welcome": {
+        "enabled": true,
+        "title": "🎉 새로운 멤버가 도착했습니다!",
+        "description": "{mention}님, 환영합니다!",
+        "color": 65280,
+        "footer": "즐거운 시간 되세요!",
+        "show_member_count": true,
+        "show_avatar": true
+      },
+      "leveling": {
+        "enabled": true,
+        "xp_per_message": 10,
+        "xp_cooldown": 60,
+        "level_up_message": "🎊 {mention}님이 레벨 {level}에 도달했습니다!",
+        "announce_level_up": true
+      },
+      "moderation": {
+        "log_channel_id": null,
+        "max_warnings": 3
+      }
+    }

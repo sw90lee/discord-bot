@@ -1,0 +1,371 @@
+# Discord Welcome Bot 설정 및 배포 가이드
+
+## 목차
+1. [Discord 봇 생성 및 설정](#1-discord-봇-생성-및-설정)
+2. [로컬 환경에서 테스트](#2-로컬-환경에서-테스트)
+3. [Docker 이미지 빌드](#3-docker-이미지-빌드)
+4. [Kubernetes에 배포](#4-kubernetes에-배포)
+5. [봇 명령어 사용법](#5-봇-명령어-사용법)
+6. [문제 해결](#6-문제-해결)
+
+---
+
+## 1. Discord 봇 생성 및 설정
+
+### 1.1 Discord Developer Portal에서 애플리케이션 생성
+
+1. [Discord Developer Portal](https://discord.com/developers/applications)에 접속합니다.
+2. 우측 상단의 **"New Application"** 버튼을 클릭합니다.
+3. 봇 이름을 입력하고 **"Create"**를 클릭합니다.
+
+### 1.2 봇 생성 및 토큰 발급
+
+1. 좌측 메뉴에서 **"Bot"**을 클릭합니다.
+2. **"Add Bot"** 버튼을 클릭하고 확인합니다.
+3. **"Reset Token"** 버튼을 클릭하여 봇 토큰을 생성합니다.
+4. 생성된 토큰을 복사하여 안전한 곳에 보관합니다. (이 토큰은 나중에 필요합니다)
+
+### 1.3 봇 권한 설정
+
+1. Bot 페이지에서 아래로 스크롤하여 **"Privileged Gateway Intents"** 섹션을 찾습니다.
+2. 다음 옵션들을 활성화합니다:
+   - ✅ **PRESENCE INTENT**
+   - ✅ **SERVER MEMBERS INTENT**
+   - ✅ **MESSAGE CONTENT INTENT**
+3. **"Save Changes"**를 클릭합니다.
+
+### 1.4 봇을 서버에 초대
+
+1. 좌측 메뉴에서 **"OAuth2"** → **"URL Generator"**를 클릭합니다.
+2. **SCOPES** 섹션에서 다음을 선택합니다:
+   - ✅ `bot`
+3. **BOT PERMISSIONS** 섹션에서 다음 권한을 선택합니다:
+   - ✅ `Send Messages` (메시지 전송)
+   - ✅ `Embed Links` (임베드 링크)
+   - ✅ `Attach Files` (파일 첨부)
+   - ✅ `Read Message History` (메시지 기록 읽기)
+   - ✅ `Use External Emojis` (외부 이모지 사용)
+4. 하단에 생성된 URL을 복사하여 브라우저에 붙여넣습니다.
+5. 봇을 추가할 서버를 선택하고 **"승인"**을 클릭합니다.
+
+### 1.5 환영 채널 ID 확인
+
+1. Discord 앱에서 **설정** → **고급** → **개발자 모드**를 활성화합니다.
+2. 환영 메시지를 보낼 채널을 우클릭하고 **"ID 복사"**를 선택합니다.
+3. 복사한 채널 ID를 안전한 곳에 보관합니다.
+
+---
+
+## 2. 로컬 환경에서 테스트
+
+### 2.1 Python 환경 설정
+
+```bash
+# Python 3.11 이상이 설치되어 있는지 확인
+python --version
+
+# 가상 환경 생성 (선택사항)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 또는
+.\venv\Scripts\activate  # Windows
+```
+
+### 2.2 의존성 설치
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2.3 환경 변수 설정
+
+`.env` 파일을 생성하고 다음 내용을 입력합니다:
+
+```env
+DISCORD_TOKEN=your_discord_bot_token_here
+WELCOME_CHANNEL_ID=your_welcome_channel_id_here
+```
+
+또는 환경 변수를 직접 설정합니다:
+
+```bash
+export DISCORD_TOKEN="your_discord_bot_token_here"
+export WELCOME_CHANNEL_ID="your_welcome_channel_id_here"
+```
+
+### 2.4 봇 실행
+
+```bash
+python bot.py
+```
+
+봇이 정상적으로 실행되면 다음과 같은 메시지가 표시됩니다:
+```
+2025-11-04 12:00:00 - discord.client - INFO - YourBot (ID: 123456789)로 로그인했습니다.
+2025-11-04 12:00:00 - __main__ - INFO - 봇이 정상적으로 시작되었습니다.
+```
+
+---
+
+## 3. Docker 이미지 빌드
+
+### 3.1 Docker 이미지 빌드
+
+```bash
+# 이미지 빌드
+docker build -t discord-welcome-bot:latest .
+
+# 특정 레지스트리에 푸시할 경우 태그 추가
+docker tag discord-welcome-bot:latest your-registry.com/discord-welcome-bot:latest
+```
+
+### 3.2 Docker로 로컬 테스트
+
+```bash
+docker run -d \
+  --name discord-bot \
+  -e DISCORD_TOKEN="your_discord_bot_token_here" \
+  -e WELCOME_CHANNEL_ID="your_welcome_channel_id_here" \
+  discord-welcome-bot:latest
+
+# 로그 확인
+docker logs -f discord-bot
+
+# 컨테이너 중지 및 삭제
+docker stop discord-bot
+docker rm discord-bot
+```
+
+### 3.3 이미지 레지스트리에 푸시
+
+```bash
+# Docker Hub에 푸시하는 경우
+docker login
+docker push your-dockerhub-username/discord-welcome-bot:latest
+
+# 프라이빗 레지스트리에 푸시하는 경우
+docker login your-registry.com
+docker push your-registry.com/discord-welcome-bot:latest
+```
+
+---
+
+## 4. Kubernetes에 배포
+
+### 4.1 사전 준비
+
+Kubernetes 클러스터가 준비되어 있어야 합니다. 다음 도구가 설치되어 있는지 확인합니다:
+- `kubectl` (Kubernetes CLI)
+- 클러스터에 대한 접근 권한
+
+```bash
+# kubectl 설치 확인
+kubectl version --client
+
+# 클러스터 연결 확인
+kubectl cluster-info
+```
+
+### 4.2 네임스페이스 생성
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+```
+
+### 4.3 Secret 생성
+
+1. `k8s/secret.yaml.template` 파일을 복사하여 `k8s/secret.yaml`을 생성합니다:
+
+```bash
+cp k8s/secret.yaml.template k8s/secret.yaml
+```
+
+2. `k8s/secret.yaml` 파일을 편집하여 실제 값을 입력합니다:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: discord-bot-secret
+  namespace: discord-bot
+type: Opaque
+stringData:
+  DISCORD_TOKEN: "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAuAbCdEf.GhIjKlMnOpQrStUvWxYz..."
+  WELCOME_CHANNEL_ID: "123456789012345678"
+```
+
+3. Secret을 Kubernetes에 생성합니다:
+
+```bash
+kubectl apply -f k8s/secret.yaml
+```
+
+**보안 주의사항**: `secret.yaml` 파일은 Git에 커밋하지 마세요! (`.gitignore`에 이미 포함되어 있습니다)
+
+### 4.4 Deployment 수정
+
+`k8s/deployment.yaml` 파일에서 이미지 경로를 수정합니다:
+
+```yaml
+spec:
+  containers:
+  - name: bot
+    image: your-registry.com/discord-welcome-bot:latest  # 실제 이미지 경로로 변경
+```
+
+### 4.5 Deployment 생성
+
+```bash
+kubectl apply -f k8s/deployment.yaml
+```
+
+### 4.6 배포 상태 확인
+
+```bash
+# Pod 상태 확인
+kubectl get pods -n discord-bot
+
+# Pod 로그 확인
+kubectl logs -f deployment/discord-welcome-bot -n discord-bot
+
+# Deployment 상세 정보
+kubectl describe deployment discord-welcome-bot -n discord-bot
+```
+
+정상적으로 배포되었다면 Pod가 `Running` 상태여야 합니다:
+
+```
+NAME                                   READY   STATUS    RESTARTS   AGE
+discord-welcome-bot-xxxxxxxxxx-xxxxx   1/1     Running   0          30s
+```
+
+---
+
+## 5. 봇 명령어 사용법
+
+봇이 정상적으로 작동하면 Discord 서버에서 다음 명령어를 사용할 수 있습니다:
+
+### `!ping`
+봇의 응답 속도를 확인합니다.
+
+```
+사용자: !ping
+봇: 🏓 Pong! 지연시간: 45ms
+```
+
+### `!info`
+봇과 서버의 정보를 표시합니다.
+
+```
+사용자: !info
+봇: [임베드 메시지로 서버 정보 표시]
+```
+
+### 자동 환영 메시지
+새로운 멤버가 서버에 참가하면 자동으로 환영 메시지가 전송됩니다.
+
+---
+
+## 6. 문제 해결
+
+### 봇이 시작되지 않는 경우
+
+1. **토큰 확인**: `DISCORD_TOKEN`이 올바르게 설정되었는지 확인합니다.
+2. **권한 확인**: Discord Developer Portal에서 Privileged Gateway Intents가 활성화되어 있는지 확인합니다.
+
+```bash
+# Kubernetes 로그 확인
+kubectl logs deployment/discord-welcome-bot -n discord-bot
+```
+
+### 환영 메시지가 전송되지 않는 경우
+
+1. **채널 ID 확인**: `WELCOME_CHANNEL_ID`가 올바른지 확인합니다.
+2. **봇 권한 확인**: 봇이 해당 채널에 메시지를 보낼 권한이 있는지 확인합니다.
+3. **Intents 확인**: `SERVER MEMBERS INTENT`가 활성화되어 있는지 확인합니다.
+
+### Pod가 CrashLoopBackOff 상태인 경우
+
+```bash
+# Pod 로그 확인
+kubectl logs deployment/discord-welcome-bot -n discord-bot
+
+# Secret이 올바르게 생성되었는지 확인
+kubectl get secret discord-bot-secret -n discord-bot -o yaml
+
+# Deployment 재시작
+kubectl rollout restart deployment/discord-welcome-bot -n discord-bot
+```
+
+### 이미지를 가져올 수 없는 경우 (ImagePullBackOff)
+
+1. **이미지 경로 확인**: `deployment.yaml`의 이미지 경로가 올바른지 확인합니다.
+2. **레지스트리 인증**: 프라이빗 레지스트리를 사용하는 경우 ImagePullSecret을 설정합니다.
+
+```bash
+# Docker 레지스트리 인증 Secret 생성
+kubectl create secret docker-registry regcred \
+  --docker-server=your-registry.com \
+  --docker-username=your-username \
+  --docker-password=your-password \
+  --docker-email=your-email \
+  -n discord-bot
+
+# deployment.yaml에 imagePullSecrets 추가
+spec:
+  imagePullSecrets:
+  - name: regcred
+```
+
+---
+
+## 추가 정보
+
+### 봇 업데이트
+
+새로운 코드를 배포하려면:
+
+```bash
+# 1. 새 이미지 빌드 및 푸시
+docker build -t your-registry.com/discord-welcome-bot:v1.1 .
+docker push your-registry.com/discord-welcome-bot:v1.1
+
+# 2. Deployment 이미지 업데이트
+kubectl set image deployment/discord-welcome-bot \
+  bot=your-registry.com/discord-welcome-bot:v1.1 \
+  -n discord-bot
+
+# 3. 롤아웃 상태 확인
+kubectl rollout status deployment/discord-welcome-bot -n discord-bot
+```
+
+### 봇 삭제
+
+```bash
+# Deployment 삭제
+kubectl delete -f k8s/deployment.yaml
+
+# Secret 삭제
+kubectl delete -f k8s/secret.yaml
+
+# Namespace 삭제 (모든 리소스 삭제)
+kubectl delete -f k8s/namespace.yaml
+```
+
+### 리소스 모니터링
+
+```bash
+# 리소스 사용량 확인
+kubectl top pod -n discord-bot
+
+# Pod 이벤트 확인
+kubectl get events -n discord-bot --sort-by='.lastTimestamp'
+```
+
+---
+
+## 지원 및 문의
+
+문제가 발생하거나 질문이 있으시면 GitHub Issues를 통해 문의해주세요.
+
+**즐거운 Discord 봇 운영 되세요!** 🎉
