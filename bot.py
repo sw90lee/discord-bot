@@ -2,9 +2,12 @@ import discord
 from discord.ext import commands
 import os
 import logging
-import asyncio
+from dotenv import load_dotenv
 from utils.database import Database
 from utils.config import Config
+
+# .env 파일 로드
+load_dotenv()
 
 # 로깅 설정
 logging.basicConfig(

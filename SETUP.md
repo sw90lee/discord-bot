@@ -79,14 +79,25 @@ pip install -r requirements.txt
 
 ### 2.3 환경 변수 설정
 
-`.env` 파일을 생성하고 다음 내용을 입력합니다:
+**방법 1: .env 파일 사용 (추천)**
 
-```env
-DISCORD_TOKEN=your_discord_bot_token_here
-WELCOME_CHANNEL_ID=your_welcome_channel_id_here
+`.env.example` 파일을 복사하여 `.env` 파일을 생성합니다:
+
+```bash
+cp .env.example .env
 ```
 
-또는 환경 변수를 직접 설정합니다:
+`.env` 파일을 편집하여 실제 값을 입력합니다:
+
+```env
+# Discord Bot Token (필수)
+DISCORD_TOKEN=MTIzNDU2Nzg5MDEyMzQ1Njc4OTAuAbCdEf.GhIjKlMnOpQrStUvWxYz...
+
+# Welcome Channel ID (선택사항)
+WELCOME_CHANNEL_ID=123456789012345678
+```
+
+**방법 2: 환경 변수 직접 설정**
 
 ```bash
 export DISCORD_TOKEN="your_discord_bot_token_here"
@@ -245,24 +256,133 @@ discord-welcome-bot-xxxxxxxxxx-xxxxx   1/1     Running   0          30s
 
 봇이 정상적으로 작동하면 Discord 서버에서 다음 명령어를 사용할 수 있습니다:
 
-### `!ping`
-봇의 응답 속도를 확인합니다.
+### 🎉 환영 시스템
 
+**`/setwelcome`** - 환영 메시지 커스터마이징 (관리자)
 ```
-사용자: !ping
-봇: 🏓 Pong! 지연시간: 45ms
-```
-
-### `!info`
-봇과 서버의 정보를 표시합니다.
-
-```
-사용자: !info
-봇: [임베드 메시지로 서버 정보 표시]
+/setwelcome title:"환영합니다!" description:"{mention}님 반갑습니다!"
 ```
 
-### 자동 환영 메시지
-새로운 멤버가 서버에 참가하면 자동으로 환영 메시지가 전송됩니다.
+**`/welcomechannel`** - 환영 채널 설정 (관리자)
+```
+/welcomechannel channel:#환영-채널
+```
+
+**`/welcometest`** - 환영 메시지 미리보기 (관리자)
+```
+/welcometest
+```
+
+### 👮 모더레이션
+
+**`/kick`** - 멤버 추방
+```
+/kick member:@사용자 reason:"규칙 위반"
+```
+
+**`/ban`** - 멤버 차단
+```
+/ban member:@사용자 reason:"악의적 행동" delete_messages:7
+```
+
+**`/unban`** - 차단 해제
+```
+/unban user_id:123456789
+```
+
+**`/timeout`** - 임시 타임아웃
+```
+/timeout member:@사용자 minutes:60 reason:"경고"
+```
+
+**`/clear`** - 메시지 대량 삭제
+```
+/clear amount:50
+```
+
+**`/warn`** - 경고 부여
+```
+/warn member:@사용자 reason:"스팸"
+```
+
+**`/warnings`** - 경고 목록 확인
+```
+/warnings member:@사용자
+```
+
+### 🎭 역할 관리
+
+**`/autorole`** - 신규 멤버 자동 역할 설정
+```
+/autorole role:@멤버
+```
+
+**`/role`** - 역할 부여/제거
+```
+/role member:@사용자 role:@역할 action:부여
+```
+
+**`/reactionrole`** - 반응 역할 설정
+```
+/reactionrole message_id:123456 emoji:👋 role:@역할
+```
+
+### 📊 레벨링 시스템
+
+**`/rank`** - 내 레벨 확인
+```
+/rank
+/rank member:@사용자  # 다른 사용자 확인
+```
+
+**`/leaderboard`** - 서버 순위표
+```
+/leaderboard page:1
+```
+
+**`/setlevel`** - 레벨 설정 (관리자)
+```
+/setlevel member:@사용자 level:10
+```
+
+### 🛠️ 유틸리티
+
+**`/ping`** - 봇 응답 속도 확인
+```
+/ping
+```
+
+**`/serverinfo`** - 서버 정보
+```
+/serverinfo
+```
+
+**`/userinfo`** - 사용자 정보
+```
+/userinfo
+/userinfo member:@사용자
+```
+
+**`/poll`** - 투표 생성
+```
+/poll question:"점심 메뉴?" option1:"치킨" option2:"피자" option3:"햄버거"
+```
+
+**`/announce`** - 공지사항 생성
+```
+/announce title:"중요 공지" description:"내용" color:red
+```
+
+**`/avatar`** - 아바타 확인
+```
+/avatar member:@사용자
+```
+
+### 자동 기능
+
+- **자동 환영 메시지**: 새 멤버가 서버에 참가하면 자동으로 환영 메시지 전송
+- **자동 레벨링**: 채팅할수록 자동으로 XP 획득 및 레벨업
+- **반응 역할**: 설정한 메시지에 반응하면 자동으로 역할 부여
 
 ---
 

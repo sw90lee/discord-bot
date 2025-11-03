@@ -48,7 +48,11 @@
 # 의존성 설치
 pip install -r requirements.txt
 
-# 환경 변수 설정
+# .env 파일 생성 (추천)
+cp .env.example .env
+# .env 파일을 편집하여 DISCORD_TOKEN을 입력하세요
+
+# 또는 환경 변수로 직접 설정
 export DISCORD_TOKEN="your_bot_token"
 export WELCOME_CHANNEL_ID="your_channel_id"  # 선택사항
 
